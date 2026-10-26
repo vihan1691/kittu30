@@ -333,7 +333,7 @@ function tstamp(){return '<span class="t">'+nowT()+'</span>'}
 function msgText(text){var m=h('div','msg');var s=h('span');s.textContent=text;m.appendChild(s);m.insertAdjacentHTML('beforeend',tstamp());return add(m)}
 function msgPhoto(){
   var m=h('div','msg photo');var im=h('img');im.src=PHOTO;im.alt='Kittu at a hill-station viewpoint';m.appendChild(im);
-  var p=h('p');p.textContent="I'm turning 30, and I would love for you to celebrate it with me.";m.appendChild(p);
+  var p=h('p');p.textContent=guest.family?"I'm turning 30! Sending you lots of love, and I would love your blessings.":"I'm turning 30, and I would love for you to celebrate it with me.";m.appendChild(p);
   m.insertAdjacentHTML('beforeend',tstamp());return add(m);
 }
 function msgDate(){
@@ -360,7 +360,7 @@ function msgDress(){
 }
 function link(cls,text,href){var a=h('a',cls);a.textContent=text;a.href=href;a.target='_blank';a.rel='noopener noreferrer';return a}
 function rsvpUrl(yes){
-  var who=gname?("It's "+gname+". "):"";
+  var who=guest.rsvpIntro!==undefined?guest.rsvpIntro:(gname?("It's "+gname+". "):"");
   var txt=yes?(who+"I will be there for Kittu's 30th on 1 November. Looking forward to it!"):(who+"Sorry, I can't make it to Kittu's 30th on 1 November, but I'm sending my love.");
   return 'https://wa.me/'+EVENT.rsvp+'?text='+encodeURIComponent(txt);
 }
@@ -382,6 +382,20 @@ function msgActions(){
   yes.addEventListener('click',afterRsvp);no.addEventListener('click',afterRsvp);
   return add(m);
 }
+var wished=false;
+function msgWishes(){
+  var m=h('div','msg actions','<div class="lbl">Send your wishes</div>');
+  var a=link('btn yes','Send wishes on WhatsApp','https://wa.me/'+EVENT.rsvp+'?text='+encodeURIComponent("Happy 30th Birthday Kittu! Sending you lots of love and blessings \uD83C\uDF89"));
+  m.appendChild(a);m.insertAdjacentHTML('beforeend',tstamp());
+  a.addEventListener('click',function(){
+    var r=a.getBoundingClientRect();burst(r.left+r.width/2,r.top,REDUCED?30:90);
+    if(wished)return;wished=true;
+    var n=h('div','note');n.setAttribute('role','status');
+    n.textContent='Your wishes are ready in WhatsApp. Press send there.';
+    feed.appendChild(n);toBottom();
+  });
+  return add(m);
+}
 function replayBtn(){
   var b=h('button','again');b.type='button';b.textContent='Replay the confetti';
   b.addEventListener('click',function(){burst(W/2,H*.62,REDUCED?40:150);rain(REDUCED?0:3500)});
@@ -395,6 +409,7 @@ async function runChat(){
     function(){msgText(guest.greet?(guest.greet+' 🎉'):gname?('Hi '+gname+'! 🎉'):'Hi there! 🎉')},
     msgPhoto,msgDate,msgVenue,msgDress,msgActions
   ];
+  if(guest.family){steps=[steps[0],msgPhoto,msgDate,function(){msgText("Even if you cannot be there, your blessings and wishes mean the world to me.")},msgWishes]}
   await sleep(450);
   for(var i=0;i<steps.length;i++){
     var t=typing();await sleep(i===0?800:1000);t.remove();
